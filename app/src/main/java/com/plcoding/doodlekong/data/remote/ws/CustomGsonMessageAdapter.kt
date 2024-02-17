@@ -26,7 +26,7 @@ class CustomGsonMessageAdapter<T> private constructor(
     val gson: Gson
 ): MessageAdapter<T> {
 
-    // receive message from server to client
+    // receive message as client from the server
     override fun fromMessage(message: Message): T {
         val stringValue = when(message) {
             is Message.Text -> message.value
