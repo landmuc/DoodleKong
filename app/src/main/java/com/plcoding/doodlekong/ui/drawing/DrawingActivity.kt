@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.plcoding.doodlekong.R
 import com.plcoding.doodlekong.adapters.ChatMessageAdapter
+import com.plcoding.doodlekong.adapters.PlayerAdapter
 import com.plcoding.doodlekong.data.remote.ws.Room
 import com.plcoding.doodlekong.data.remote.ws.models.*
 import com.plcoding.doodlekong.databinding.ActivityDrawingBinding
@@ -48,10 +49,13 @@ class DrawingActivity : AppCompatActivity() {
 
     private lateinit var toggle: ActionBarDrawerToggle
     private lateinit var rvPlayers: RecyclerView
+    @Inject
+    lateinit var playerAdapter: PlayerAdapter
 
     private lateinit var chatMessageAdapter: ChatMessageAdapter
 
     private var updateChatJob: Job? = null
+    private var updatePlayersJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,7 +69,7 @@ class DrawingActivity : AppCompatActivity() {
         toggle = ActionBarDrawerToggle(this, binding.root, R.string.open, R.string.close)
         toggle.syncState()
 
-        binding.drawingView.roomName = args.roomname
+        binding.drawingView.roomName = args.roomName
 
         chatMessageAdapter.stateRestorationPolicy =
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
@@ -73,6 +77,11 @@ class DrawingActivity : AppCompatActivity() {
         val header = layoutInflater.inflate(R.layout.nav_drawer_header, binding.navView)
         rvPlayers = header.findViewById(R.id.rvPlayers)
         binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+
+        rvPlayers.apply {
+            adapter = playerAdapter
+            layoutManager = LinearLayoutManager(this@DrawingActivity)
+        }
 
         binding.ibPlayers.setOnClickListener {
             binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
@@ -99,7 +108,7 @@ class DrawingActivity : AppCompatActivity() {
             viewModel.sendChatMessage(
                 ChatMessage(
                     args.username,
-                    args.roomname,
+                    args.roomName,
                     binding.etMessage.text.toString(),
                     System.currentTimeMillis()
                 )
@@ -167,15 +176,15 @@ class DrawingActivity : AppCompatActivity() {
                     btnSecondWord.text = newWords[1]
                     btnThirdWord.text = newWords[2]
                     btnFirstWord.setOnClickListener {
-                        viewModel.chooseWord(newWords[0], args.roomname)
+                        viewModel.chooseWord(newWords[0], args.roomName)
                         viewModel.setChooseWordOverlayVisibility(false)
                     }
                     btnSecondWord.setOnClickListener {
-                        viewModel.chooseWord(newWords[1], args.roomname)
+                        viewModel.chooseWord(newWords[1], args.roomName)
                         viewModel.setChooseWordOverlayVisibility(false)
                     }
                     btnThirdWord.setOnClickListener {
-                        viewModel.chooseWord(newWords[2], args.roomname)
+                        viewModel.chooseWord(newWords[2], args.roomName)
                         viewModel.setChooseWordOverlayVisibility(false)
                     }
                 }
@@ -211,6 +220,11 @@ class DrawingActivity : AppCompatActivity() {
                     ibMic.isVisible = !isUserDrawing
                     drawingView.isEnabled = isUserDrawing
                 }
+            }
+        }
+        lifecycleScope.launchWhenStarted {
+            viewModel.players.collect { players ->
+                updatePlayersList(players)
             }
         }
         lifecycleScope.launchWhenStarted {
@@ -295,6 +309,9 @@ class DrawingActivity : AppCompatActivity() {
                         }
                     }
                 }
+                is DrawingViewModel.SocketEvent.RoundDrawInfoEvent -> {
+                    binding.drawingView.update(event.data)
+                }
                 is DrawingViewModel.SocketEvent.GameStateEvent -> {
                     binding.drawingView.clear()
                 }
@@ -327,7 +344,7 @@ class DrawingActivity : AppCompatActivity() {
                 is WebSocket.Event.OnConnectionOpened<*> -> {
                     viewModel.sendBaseModel(
                         JoinRoomHandshake(
-                            args.username, args.roomname, clientId
+                            args.username, args.roomName, clientId
                         )
                     )
                     viewModel.setConnectionProgressBarVisibility(false)
@@ -352,6 +369,13 @@ class DrawingActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         binding.rvChat.layoutManager?.onSaveInstanceState()
+    }
+
+    private fun updatePlayersList(players: List<PlayerData>) {
+        updatePlayersJob?.cancel()
+        updatePlayersJob = lifecycleScope.launch {
+            playerAdapter.updateDataset(players)
+        }
     }
 
     private fun updateChatMessageList(chat: List<BaseModel>) {
