@@ -2,12 +2,9 @@ package com.plcoding.doodlekong.ui.drawing
 
 import android.graphics.Color
 import android.os.Bundle
-import android.os.PersistableBundle
-import android.view.Gravity
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -15,7 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.*
 import androidx.navigation.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,6 +23,7 @@ import com.plcoding.doodlekong.adapters.PlayerAdapter
 import com.plcoding.doodlekong.data.remote.ws.Room
 import com.plcoding.doodlekong.data.remote.ws.models.*
 import com.plcoding.doodlekong.databinding.ActivityDrawingBinding
+import com.plcoding.doodlekong.ui.dialogs.LeaveDialog
 import com.plcoding.doodlekong.util.Constants
 import com.plcoding.doodlekong.util.hideKeyboard
 import com.tinder.scarlet.WebSocket
@@ -36,7 +34,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DrawingActivity : AppCompatActivity() {
+class DrawingActivity : AppCompatActivity(), LifecycleObserver {
 
     private lateinit var binding: ActivityDrawingBinding
 
@@ -61,6 +59,7 @@ class DrawingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityDrawingBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         subscribeToUiStateUpdates()
         listenToConnectionEvents()
         listenToSocketEvents()
@@ -405,5 +404,19 @@ class DrawingActivity : AppCompatActivity() {
             return true
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    private fun onAppInBackground() {
+        viewModel.disconnect()
+    }
+
+    override fun onBackPressed() {
+        LeaveDialog().apply {
+            setPositiveClickListener {
+                viewModel.disconnect()
+                finish()
+            }
+        }.show(supportFragmentManager, null)
     }
 }
