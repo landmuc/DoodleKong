@@ -1,4 +1,4 @@
-# ktor-scribblefrenzy
+# DoodleKong
 Disclaimer: This project was purely developed for learning purposes.
 
 ## Overview
@@ -20,7 +20,7 @@ To use this app you need to run the following server, which was specifically bui
 
 ## Screenshots
 
-<img alt="Screenshot1.png" height="400" src="Screenshots/Screenshot1.png" width="180"/>  <img alt="Screenshot2.png" height="400" src="Screenshots/Screenshot2.png" width="180"/>  <img alt="Screenshot3.png" height="400" src="Screenshots/Screenshot3.png" width="180"/>
+<img alt="Screenshot1.png" height="400" src="Screenshots/Screenshot13.png" width="180"/>  <img alt="Screenshot2.png" height="400" src="Screenshots/Screenshot2.png" width="180"/>  <img alt="Screenshot3.png" height="400" src="Screenshots/Screenshot3.png" width="180"/>
 
 <img alt="Screenshot4.png" height="400" src="Screenshots/Screenshot4.png" width="180"/>  <img alt="Screenshot5.png" height="400" src="Screenshots/Screenshot5.png" width="180"/>  <img alt="Screenshot6.png" height="400" src="Screenshots/Screenshot6.png" width="180"/>
 
